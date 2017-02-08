@@ -101,9 +101,10 @@ namespace Vidly.Controllers
             if (movie == null)
                 return HttpNotFound();
 
-            var viewModel = new MovieFormViewModel
+            var viewModel = new MovieFormViewModel(movie)
             {
-                Movie = movie,
+
+
                 Genres = _context.Genres.ToList()
             };
 
@@ -111,34 +112,38 @@ namespace Vidly.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult Save(Movie movie)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                               
-                if (movie.Id == 0)
+                var viewModel = new MovieFormViewModel(movie)
                 {
-                    movie.DateAdded = DateTime.Now;
-                    _context.Movies.Add(movie);
-                }
-                else
-                {
-                    var movieInDb = _context.Movies.Single(m => m.Id == movie.Id);
-                    movieInDb.Name = movie.Name;
-                    movieInDb.GenreId = movie.GenreId;
-                    movieInDb.NumberInStock = movie.NumberInStock;
-                    movieInDb.ReleaseDate = movie.ReleaseDate;
-                }
+                    Genres = _context.Genres.ToList()
+                };
 
-                _context.SaveChanges();
-
-                return RedirectToAction("Index", "Movies");
+                return View("MovieForm", viewModel);
             }
-            catch (Exception ex)
+
+            if (movie.Id == 0)
             {
-
-                throw;
+                movie.DateAdded = DateTime.Now;
+                _context.Movies.Add(movie);
             }
+            else
+            {
+                var movieInDb = _context.Movies.Single(m => m.Id == movie.Id);
+                movieInDb.Name = movie.Name;
+                movieInDb.GenreId = movie.GenreId;
+                movieInDb.NumberInStock = movie.NumberInStock;
+                movieInDb.ReleaseDate = movie.ReleaseDate;
+            }
+
+            _context.SaveChanges();
+
+            return RedirectToAction("Index", "Movies");
+
+
         }
 
     }
